@@ -2,14 +2,14 @@
 #![feature(is_some_with)]
 
 use base64ct::{Base64, Encoding};
+use chrono::{FixedOffset, TimeZone, Utc};
 use clap::{ArgGroup, Args, Parser, Subcommand};
-use prettytable::{Table};
+use prettytable::Table;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
-use std::env::{home_dir};
+use std::env::home_dir;
 use std::fs::{create_dir_all, read, remove_file, try_exists, write};
 use std::path::PathBuf;
-use chrono::{FixedOffset, TimeZone, Utc};
 
 fn hash(data: &String) -> String {
     let mut sh = Sha1::new();
@@ -185,7 +185,9 @@ fn main() {
 
                 let mut config_struct = ConfigStruct::from_file(&filename).unwrap();
                 config_struct.datas.push(item);
-                config_struct.to_file(&filename);
+                config_struct
+                    .to_file(&filename)
+                    .expect("save message failed, please restart");
             }
             Commands::View(cmd) => {
                 let mut config_struct = ConfigStruct::from_file(&filename).unwrap();
@@ -206,7 +208,9 @@ fn main() {
                         ]);
                     });
 
-                    table.print_tty(true);
+                    table
+                        .print_tty(true)
+                        .expect("print messages error, please report to author");
                 } else {
                     config_struct.datas.sort_by(|a, b| b.c_time.cmp(&a.c_time));
 
