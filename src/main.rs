@@ -1,16 +1,15 @@
 #![feature(fs_try_exists)]
 #![feature(is_some_with)]
 
-use base64ct::{Base64, Encoder, Encoding, LineEnding};
-use clap::{ArgGroup, Args, Parser, SubCommand, Subcommand};
-use prettytable::{Cell, Row, Table};
+use base64ct::{Base64, Encoding};
+use clap::{ArgGroup, Args, Parser, Subcommand};
+use prettytable::{Table};
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
-use std::env::{home_dir, temp_dir};
-use std::fs::{create_dir, create_dir_all, read, remove_file, try_exists, write};
+use std::env::{home_dir};
+use std::fs::{create_dir_all, read, remove_file, try_exists, write};
 use std::path::PathBuf;
-// use std::time::{SystemTime, UNIX_EPOCH};
-use chrono::{DateTime, Duration, FixedOffset, TimeZone, Utc};
+use chrono::{FixedOffset, TimeZone, Utc};
 
 fn hash(data: &String) -> String {
     let mut sh = Sha1::new();
@@ -58,7 +57,7 @@ fn initial_config_file(dir: PathBuf) {
 
 #[derive(Parser, Debug)]
 #[clap(name = "Record")]
-#[clap(version = "0.1")]
+#[clap(version = "v0.1")]
 #[clap(author = "shulandmimi <shulandmimi@163.com>")]
 #[clap(about = "record something")]
 struct Cli {
@@ -82,7 +81,8 @@ struct Add {
 #[derive(Debug, Args)]
 #[clap(group(ArgGroup::new("View")))]
 struct View {
-    // #[clap(long, short)]
+    #[clap(long, action(clap::ArgAction::SetTrue), default_value_t = false)]
+    verbose: bool,
 }
 
 #[derive(Debug, Args)]
@@ -159,6 +159,10 @@ fn main() {
 
     let args = Cli::parse();
 
+    if args.command.is_none() {
+        return;
+    }
+
     args.command.map(|command| {
         match command {
             Commands::Delete => {
@@ -184,17 +188,33 @@ fn main() {
                 config_struct.to_file(&filename);
             }
             Commands::View(cmd) => {
-                let mut table = Table::new();
-
-                table.add_row(row!["ID", "Message", "CreateTime"]);
                 let mut config_struct = ConfigStruct::from_file(&filename).unwrap();
 
-                config_struct.datas.iter().for_each(|item| {
-                    let china_timezone = FixedOffset::east(8 * 3600);
-                    table.add_row(row![item.hash, item.message, Utc.timestamp(item.c_time, 0).with_timezone(&china_timezone).to_string()]);
-                });
+                if cmd.verbose {
+                    let mut table = Table::new();
 
-                table.print_tty(true);
+                    table.add_row(row!["ID", "Message", "CreateTime"]);
+
+                    config_struct.datas.iter().for_each(|item| {
+                        let china_timezone = FixedOffset::east(8 * 3600);
+                        table.add_row(row![
+                            item.hash,
+                            item.message,
+                            Utc.timestamp(item.c_time, 0)
+                                .with_timezone(&china_timezone)
+                                .to_string()
+                        ]);
+                    });
+
+                    table.print_tty(true);
+                } else {
+                    config_struct.datas.sort_by(|a, b| b.c_time.cmp(&a.c_time));
+
+                    config_struct
+                        .datas
+                        .iter()
+                        .for_each(|item| println!("{}", item.message));
+                }
             }
             Commands::Clear(cmd) => {
                 if try_exists(&filename).is_ok_and(|ok| *ok) {
