@@ -1,14 +1,11 @@
 #![feature(fs_try_exists)]
 #![feature(is_some_with)]
 
-use chrono::{FixedOffset, TimeZone, Utc};
-use clap::{ArgGroup, Args, Parser, Subcommand};
-use prettytable::Table;
-use record::structure::{Config, ConfigStruct, RECORD_CONFIG_DIR, RECORD_CONFIG_FILENAME};
+use clap::{Parser, Subcommand};
+use record::structure::{Config, RECORD_CONFIG_DIR, RECORD_CONFIG_FILENAME};
 use std::env::home_dir;
-use std::fs::{remove_file, try_exists};
 
-use record::commands::{add, clear, view};
+use record::commands::{add, clear, delete, modify, view};
 use record::fs::initial_config_file::initial_config_file;
 
 #[macro_use]
@@ -26,8 +23,8 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    Delete,
-    Modify,
+    Delete(delete::Delete),
+    Modify(modify::Modify),
     Add(add::Add),
     View(view::View),
     Clear(clear::Clear),
@@ -50,12 +47,14 @@ fn main() {
 
     args.command.map(|command| {
         match command {
-            Commands::Delete => {
-                println!("delete");
+            Commands::Delete(cmd) => {
+                // println!("delete");
+                cmd.run(config);
             }
 
-            Commands::Modify => {
-                println!("modify");
+            Commands::Modify(cmd) => {
+                // println!("modify");
+                cmd.run(config);
             }
 
             Commands::Add(cmd) => {
