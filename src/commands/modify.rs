@@ -17,12 +17,6 @@ impl Modify {
     pub fn run(&self, config: Config) {
         let mut config_struct = ConfigStruct::from_file(&config.config_file).unwrap();
 
-        // let new_datas: Vec<Message> = config_struct
-        //     .datas
-        //     .into_iter()
-        //     .filter(|item| !item.hash.starts_with(&self.hash))
-        //     .collect();
-
         let item = config_struct
             .datas
             .iter_mut()

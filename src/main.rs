@@ -8,9 +8,6 @@ use std::env::home_dir;
 use record::commands::{add, clear, delete, modify, view};
 use record::fs::initial_config_file::initial_config_file;
 
-#[macro_use]
-extern crate prettytable;
-
 #[derive(Parser, Debug)]
 #[clap(name = "Record")]
 #[clap(version = "v0.1")]
@@ -48,12 +45,10 @@ fn main() {
     args.command.map(|command| {
         match command {
             Commands::Delete(cmd) => {
-                // println!("delete");
                 cmd.run(config);
             }
 
             Commands::Modify(cmd) => {
-                // println!("modify");
                 cmd.run(config);
             }
 
